@@ -1,4 +1,5 @@
 import json
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -6,41 +7,38 @@ from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 data = {}
+baseurl = "https://www.recreation.gov/camping/"
+location = input("Enter national park: ")
+start_date = input("Enter start date (MM/DD/YYYY)")
+end_date = input("Enter end date (MM/DD/YYYY)")
 
 service = ChromeService(executable_path=ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
-driver.get("https://www.nps.gov/index.htm")
+driver.get("https://www.recreation.gov/")
 
-driver.implicitly_wait(3)
+search_bar = driver.find_element(by=By.ID, value="hero-search-input")
+search_button = driver.find_element(by=By.ID, value="gtm-explore-all-hero-search")
+search_bar.send_keys(location)
+search_button.click()
 
-state_dropdown = driver.find_element(by=By.CSS_SELECTOR, value="[data-toggle='dropdown']")
-state_dropdown.click()
+time.sleep(2)
 
-state_options = driver.find_elements(by=By.CSS_SELECTOR, value="[role='menuitem']")
-for i in range(0, len(state_options) - 55):
+selections = driver.find_elements(by=By.CSS_SELECTOR, value="#search-results-list .search-outer-wrap .flex-col-12")
+selections[0].click()
 
-    state_name = state_options[i].text
-    data.update({state_name: {}})
-    state_options[i].click()
+time.sleep(10)
 
-    national_parks = driver.find_elements(by=By.CSS_SELECTOR, value="#list_parks > li")
-    for j in range(0, len(national_parks)):
+campsites = driver.find_elements(by=By.CSS_SELECTOR, value="[data-component='CarouselItem']")
+print(len(campsites))
+for i in range(0, len(campsites)):
 
-        national_park_link = national_parks[j].find_element(by=By.CSS_SELECTOR, value="h3 > a")
-        national_park_name = national_park_link.text
-        data[state_name].update({national_park_name: {}})
+    campsites[i].click()
 
-        partial_href = national_park_link.get_attribute("href")[-6:]
+    '''campsite_start_date_bar = driver.find_element(by=By.ID, value="campground-start-date-calendar")
+    campsite_end_date_bar = driver.find_eleemnt(by=By.ID, value="campground-end-date-calendar")
+    campsite_start_date_bar.send_keys(start_date)
+    campsite_end_date_bar.send_keys(end_date)'''
 
-        national_park_link.click()
-
-        try:
-            driver.find_element(by=By.CSS_SELECTOR, value="[href='" + partial_href + "planyourvisit/eatingsleeping.htm']")
-            print("Found")
-        except:
-            print("Not found")
-
-        driver.back()
-        national_parks = driver.find_elements(by=By.CSS_SELECTOR, value="#list_parks > li")
+time.sleep(10)
 
 print(data)
